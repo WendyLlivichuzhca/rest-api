@@ -26,6 +26,12 @@ public class ProductController {
 
 	@Autowired
 	private IProductDAO repository;
+	
+	@GetMapping("/")
+	public String home() {
+	    return "API REST Spring Boot funcionando correctamente en Heroku";
+	}
+
 
 	@PostMapping("/product")
 	public ProductDTO create(@Validated @RequestBody ProductDTO p) {
