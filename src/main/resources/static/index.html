@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Productos - API REST</title>
+  <style>
+    /* (tu CSS anterior sin cambios para estilos) */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f4f7f8;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    button {
+      display: block;
+      margin: 0 auto 30px auto;
+      padding: 12px 25px;
+      background-color: #3498db;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      font-weight: bold;
+      font-size: 16px;
+      cursor: pointer;
+      box-shadow: 0 4px 8px rgba(52, 152, 219, 0.4);
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #2980b9;
+    }
+
+    table {
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto 40px auto;
+      border-collapse: collapse;
+      background-color: white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    thead {
+      background-color: #2980b9;
+      color: white;
+      text-transform: uppercase;
+    }
+
+    thead th {
+      padding: 15px 20px;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    tbody tr:nth-child(even) {
+      background-color: #f9fbfc;
+    }
+
+    tbody tr:hover {
+      background-color: #d6e9fc;
+      cursor: pointer;
+    }
+
+    tbody td {
+      padding: 12px 20px;
+      border-bottom: 1px solid #eaeaea;
+      font-size: 15px;
+      color: #555;
+      word-break: break-word;
+    }
+
+    form {
+      max-width: 500px;
+      margin: 0 auto 40px auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    form label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+
+    form input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    #mensaje {
+      text-align: center;
+      font-weight: bold;
+      margin-bottom: 20px;
+      color: green;
+    }
+
+  </style>
+</head>
+<body>
+  <h1>Productos</h1>
+
+  <form id="formCrearProducto">
+    <label for="name">Nombre</label>
+    <input type="text" id="name" name="name" required />
+
+    <label for="price">Precio</label>
+    <input type="number" id="price" name="price" step="0.01" min="0" required />
+
+    <label for="expiry_date">Fecha Expiración</label>
+    <input type="date" id="expiry_date" name="expiry_date" required />
+
+    <button type="submit">Crear Producto</button>
+  </form>
+
+  <div id="mensaje"></div>
+
+  <button onclick="cargarProductos()">Cargar Productos</button>
+
+  <table id="tablaProductos">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nombre</th>
+        <th>Precio</th>
+        <th>Fecha Expiración</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Productos cargados aquí -->
+    </tbody>
+  </table>
+
+  <script>
+    const urlBase = 'https://hg-rest-apis-ed3f16f84c4e.herokuapp.com/api/products';
+
+    // Función para cargar productos y mostrarlos en la tabla
+    function cargarProductos() {
+      fetch(urlBase + '/')
+        .then(response => response.json())
+        .then(data => {
+          const tbody = document.querySelector('#tablaProductos tbody');
+          tbody.innerHTML = '';
+
+          if (data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">No hay productos disponibles</td></tr>';
+            return;
+          }
+
+          data.forEach(producto => {
+            const fila = document.createElement('tr');
+            fila.innerHTML = `
+              <td>${producto._id}</td>
+              <td>${producto.name}</td>
+              <td>$${producto.price.toFixed(2)}</td>
+              <td>${producto.expiry_date}</td>
+            `;
+            tbody.appendChild(fila);
+          });
+        })
+        .catch(error => {
+          alert('Error al cargar productos: ' + error);
+          console.error(error);
+        });
+    }
+
+    // Función para crear un producto desde el formulario
+    document.getElementById('formCrearProducto').addEventListener('submit', function(event) {
+      event.preventDefault();
+
+      const name = document.getElementById('name').value.trim();
+      const price = parseFloat(document.getElementById('price').value);
+      const expiry_date = document.getElementById('expiry_date').value;
+
+      // Validación básica
+      if (!name || isNaN(price) || !expiry_date) {
+        mostrarMensaje('Por favor, complete todos los campos correctamente.', true);
+        return;
+      }
+
+      const nuevoProducto = {
+        name,
+        price,
+        expiry_date
+      };
+
+      fetch(urlBase + '/product', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(nuevoProducto)
+      })
+      .then(response => {
+        if (!response.ok) throw new Error('Error al crear producto');
+        return response.json();
+      })
+      .then(data => {
+        mostrarMensaje('Producto creado correctamente.');
+        this.reset();
+        cargarProductos(); // Recarga la tabla con el nuevo producto
+      })
+      .catch(error => {
+        mostrarMensaje('Error al crear producto: ' + error.message, true);
+      });
+    });
+
+    // Mostrar mensajes de éxito o error
+    function mostrarMensaje(msg, esError = false) {
+      const divMensaje = document.getElementById('mensaje');
+      divMensaje.textContent = msg;
+      divMensaje.style.color = esError ? 'red' : 'green';
+      setTimeout(() => {
+        divMensaje.textContent = '';
+      }, 4000);
+    }
+  </script>
+</body>
+</html>
