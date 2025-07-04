@@ -19,38 +19,30 @@ import com.hg.crud.models.ProductDTO;
 import com.hg.crud.repositories.IProductDAO;
 
 @RestController
-@CrossOrigin(origins = "*", methods = { RequestMethod.POST, RequestMethod.GET, RequestMethod.PUT,
-		RequestMethod.DELETE })
+@CrossOrigin(origins = "*", methods = { RequestMethod.POST, RequestMethod.GET, RequestMethod.PUT, RequestMethod.DELETE })
 @RequestMapping("/api/products")
 public class ProductController {
 
-	@Autowired
-	private IProductDAO repository;
-	
-	@GetMapping("/")
-	public String home() {
-	    return "API REST Spring Boot funcionando correctamente en Heroku";
-	}
+    @Autowired
+    private IProductDAO repository;
 
+    @PostMapping("/product")
+    public ProductDTO create(@Validated @RequestBody ProductDTO p) {
+        return repository.insert(p);
+    }
 
-	@PostMapping("/product")
-	public ProductDTO create(@Validated @RequestBody ProductDTO p) {
-		return repository.insert(p);
-	}
+    @GetMapping("/")
+    public List<ProductDTO> readAll() {
+        return repository.findAll();
+    }
 
-	@GetMapping("/")
-	public List<ProductDTO> readAll() {
-		return repository.findAll();
-	}
+    @PutMapping("/product/{id}")
+    public ProductDTO update(@PathVariable String id, @Validated @RequestBody ProductDTO p) {
+        return repository.save(p);
+    }
 
-	@PutMapping("/product/{id}")
-	public ProductDTO update(@PathVariable String id, @Validated @RequestBody ProductDTO p) {
-		return repository.save(p);
-	}
-
-	@DeleteMapping("/product/{id}")
-	public void delete(@PathVariable String id) {
-		repository.deleteById(id);
-	}
-
+    @DeleteMapping("/product/{id}")
+    public void delete(@PathVariable String id) {
+        repository.deleteById(id);
+    }
 }
